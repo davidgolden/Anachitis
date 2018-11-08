@@ -1,181 +1,181 @@
 body:
   name: Body
   defense: 0
-  body: BODY
-  file: BODY_male
+  body: body
+  file: BODY_male_hair
   lookup: body
 
 quiver:
   name: Quiver
   defense: 0
-  body: BEHIND
+  body: behind
   file: BEHIND_quiver
   lookup: quiver
 
 leather_belt:
   name: Leather Belt
   defense: 5
-  body: BELT
+  body: belt
   file: BELT_leather
   lookup: leather_belt
 
 rope_belt:
   name: Rope Belt
   defense: 5
-  body: BELT
+  body: belt
   file: BELT_rope
   lookup: rope_belt
 
 plate_shoes:
   name: Plate Armor Shoes
   defense: 10
-  body: FEET
+  body: feet
   file: FEET_plate_armor_shoes
   lookup: plate_shoes
 
 brown_shoes:
   name: Brown Shoes
   defense: 5
-  body: FEET
+  body: feet
   file: FEET_shoes_brown
   lookup: brown_shoes
 
 plate_gloves:
   name: Plate Armor Gloves
   defense: 10
-  body: HANDS
+  body: hands
   file: HANDS_plate_armor_gloves
   lookup: plate_gloves
 
 chain_helmet:
   name: Chain Armor Helmet
   defense: 10
-  body: HEAD
+  body: head
   file: HEAD_chain_armor_helmet
   lookup: chain_helmet
 
 chain_hood:
   name: Chain Armor Hood
   defense: 10
-  body: HEAD
+  body: head
   file: HEAD_chain_armor_hood
   lookup: chain_hood
 
 hair_blonde:
   name: Your hair!
   defense: 0
-  body: HEAD
+  body: head
   file: HEAD_hair_blonde
   lookup: hair_blonde
 
 leather_hat:
   name: Leather Hat
   defense: 5
-  body: HEAD
+  body: head
   file: HEAD_leather_armor_hat
   lookup: leather_hat
 
 plate_helmet:
   name: Plate Armor Helmet
   defense: 15
-  body: HEAD
+  body: head
   file: HEAD_plate_armor_helmet
   lookup: plate_helmet
 
 robe_hood:
   name: Robe Hood
   defense: 5
-  body: HEAD
+  body: head
   file: HEAD_robe_hood
   lookup: robe_hood
 
 green_pants:
   name: Green Pants
   defense: 5
-  body: LEGS
+  body: legs
   file: LEGS_pants_greenish
   lookup: green_pants
 
 plate_legs:
   name: Plate Armor Legs
   defense: 15
-  body: LEGS
+  body: legs
   file: LEGS_plate_armor_pants
   lookup: plate_legs
 
 robe_skirt:
   name: Robe Skirt
   defense: 5
-  body: LEGS
+  body: legs
   file: LEGS_robe_skirt
   lookup: robe_skirt
 
 leather_shoulders:
   name: Leather Armor Shoulders
   defense: 5
-  body: SHOULDERS
+  body: shoulders
   file: SHOULDERS_leather_armor_shoulders
   lookup: leather_shoulders
 
 plate_shoulders:
   name: Plate Armor Shoulders
   defense: 10
-  body: SHOULDERS
+  body: shoulders
   file: SHOULDERS_plate_armor_arms_shoulders
   lookup: plate_shoulders
 
 leather_armor:
   name: Leather Armor
   defense: 10
-  body: TORSO
+  body: torso
   file: TORSO_leather_armor_torso
   lookup: leather_armor
 
 purple_armor:
   name: Chain Armor of Purp Skurp
   defense: 30
-  body: TORSO
+  body: torso
   file: TORSO_chain_armor_jacket_purple
   lookup: purple_armor
 
 chain_armor:
   name: Chain Armor
   defense: 15
-  body: TORSO
+  body: torso
   file: TORSO_chain_armor_torso
   lookup: chain_armor
 
 leather_bracers:
   name: Leather Armor Bracers
   defense: 5
-  body: TORSO
+  body: torso
   file: TORSO_leather_armor_bracers
   lookup: leather_bracers
 
 white_shirt:
   name: White Shirt
   defense: 5
-  body: TORSO
+  body: torso
   file: TORSO_leather_armor_shirt_white
   lookup: white_shirt
 
 plate_armor:
   name: Plate Armor
   defense: 20
-  body: TORSO
+  body: torso
   file: TORSO_plate_armor_torso
   lookup: plate_armor
 
 robe_brown:
   name: Brown Robe
   defense: 5
-  body: TORSO
+  body: torso
   file: TORSO_robe_shirt_brown
   lookup: robe_brown
 
 shield:
   name: Shield
   defense: 15
-  body: WEAPON
+  body: weapon
   file: WEAPON_shield_cutout_body
   lookup: shield
