@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="staggered" renderorder="right-down" width="5" height="20" tilewidth="512" tileheight="256" infinite="0" staggeraxis="y" staggerindex="odd" nextlayerid="5" nextobjectid="4">
+ <tileset firstgid="1" source="buildings.tsx"/>
+ <tileset firstgid="11" source="Terrain.tsx"/>
+ <tileset firstgid="22" source="Trees.tsx"/>
+ <layer id="2" name="Ground" width="5" height="20">
+  <data encoding="csv">
+19,19,19,19,13,
+18,19,19,19,13,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+19,19,19,19,19,
+18,19,19,19,19,
+18,19,19,19,11
+</data>
+ </layer>
+ <layer id="4" name="Trees" width="5" height="20">
+  <data encoding="csv">
+0,22,0,0,0,
+22,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0
+</data>
+ </layer>
+ <layer id="1" name="Houses" width="5" height="20">
+  <data encoding="csv">
+0,0,0,0,0,
+0,0,0,0,0,
+0,10,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="3" name="Object Layer 1">
+  <object id="3" name="blocker" x="520.24" y="387.871">
+   <polygon points="0,0 237.032,141.604 520.24,15.3917 237.032,-143.143"/>
+  </object>
+ </objectgroup>
+</map>
