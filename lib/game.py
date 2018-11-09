@@ -1,7 +1,7 @@
 import os, sys, pygame, yaml, math
 from pygame.locals import *
 from hero import Hero
-from display import Inventory
+from display import Inventory, DialogBox
 import pytmx
 
 import tilerender
@@ -169,8 +169,6 @@ class Game():
             self.hero.update(deg)
 
             if pygame.sprite.spritecollideany(self.hero, self.blockers):
-                # right_sprite = pygame.sprite.spritecollideany(self.hero, self.blockers)
-                # if pygame.sprite.collide_mask(right_sprite, self.hero.mask):
                     self.location[0] -= round(cos)
                     self.location[1] -= round(sin)
                     self.blockers.update(round(cos), round(sin))
@@ -190,11 +188,15 @@ class Game():
 
         self.update_hero_position()
 
-        self.screen.blit(self.map_surface, (-self.location[0] + self.hero.rect.x, -self.location[1] + self.hero.rect.y))
+        hero_location = (-self.location[0] + self.hero.rect.x, -self.location[1] + self.hero.rect.y)
+
+        self.screen.blit(self.map_surface, hero_location)
 
         self.active_sprite_list.draw(self.screen)  # draw active sprites
 
-        self.screen.blit(self.fringe_layer, (-self.location[0] + self.hero.rect.x, -self.location[1] + self.hero.rect.y))
+        self.screen.blit(self.fringe_layer, hero_location)
+
+        self.screen.blit(DialogBox((hero_location[0] - 200, hero_location[1] - 232), 'Hello world of Anachitis! This is going to be a really long message that will have to wrap!', ['Yes', 'No']).render(), (hero_location[0] - 200, hero_location[1] - 232))
 
         if self.active_window:
             self.screen.blit(self.active_window, (0,0))

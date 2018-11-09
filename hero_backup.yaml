@@ -2,7 +2,7 @@ equipped:
   behind: ''
   belt: ''
   body: !!python/object:display.Item
-    sprite_file: /Users/davidgolden/Desktop/Python/PyGame/data/sprites/png/walkcycle/BODY_male.png
+    sprite_file: /Users/davidgolden/Desktop/Python/Anachitis/data/sprites/png/walkcycle/BODY_male.png
     stats:
       body: body
       defense: 0
@@ -12,7 +12,7 @@ equipped:
   feet: ''
   hands: ''
   head: !!python/object:display.Item
-    sprite_file: /Users/davidgolden/Desktop/Python/PyGame/data/sprites/png/walkcycle/HEAD_hair_blonde.png
+    sprite_file: /Users/davidgolden/Desktop/Python/Anachitis/data/sprites/png/walkcycle/HEAD_hair_blonde.png
     stats:
       body: head
       defense: 0
@@ -20,7 +20,7 @@ equipped:
       lookup: hair_blonde
       name: Your hair!
   legs: !!python/object:display.Item
-    sprite_file: /Users/davidgolden/Desktop/Python/PyGame/data/sprites/png/walkcycle/LEGS_plate_armor_pants.png
+    sprite_file: /Users/davidgolden/Desktop/Python/Anachitis/data/sprites/png/walkcycle/LEGS_plate_armor_pants.png
     stats:
       body: legs
       defense: 15
@@ -28,7 +28,7 @@ equipped:
       lookup: plate_legs
       name: Plate Armor Legs
   torso: !!python/object:display.Item
-    sprite_file: /Users/davidgolden/Desktop/Python/PyGame/data/sprites/png/walkcycle/TORSO_chain_armor_jacket_purple.png
+    sprite_file: /Users/davidgolden/Desktop/Python/Anachitis/data/sprites/png/walkcycle/TORSO_chain_armor_jacket_purple.png
     stats:
       body: torso
       defense: 30
@@ -38,7 +38,7 @@ equipped:
   weapon: ''
 inventory:
 - !!python/object:display.Item
-  sprite_file: /Users/davidgolden/Desktop/Python/PyGame/data/sprites/png/walkcycle/TORSO_plate_armor_torso.png
+  sprite_file: /Users/davidgolden/Desktop/Python/Anachitis/data/sprites/png/walkcycle/TORSO_plate_armor_torso.png
   stats:
     body: torso
     defense: 20
@@ -46,7 +46,7 @@ inventory:
     lookup: plate_armor
     name: Plate Armor
 - !!python/object:display.Item
-  sprite_file: /Users/davidgolden/Desktop/Python/PyGame/data/sprites/png/walkcycle/TORSO_plate_armor_torso.png
+  sprite_file: /Users/davidgolden/Desktop/Python/Anachitis/data/sprites/png/walkcycle/TORSO_plate_armor_torso.png
   stats:
     body: torso
     defense: 20

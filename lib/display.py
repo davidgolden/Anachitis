@@ -134,8 +134,64 @@ class Inventory:
     def add_item(self, type, item):
         self.inventory.append(Item(type, item))
 
-def quests():
-    close_all_windows()
-    font = pygame.freetype.Font(os.path.join(FONT_DIR, 'enchanted_land.otf'),115)
-    inventory = font.render('My Quests', (0,0,0), (255,221,138))
-    return (inventory[0], inventory[1])
+class DialogBox(pygame.sprite.Sprite):
+    def __init__(self, pos, dialog, size=(400,200)):
+        pygame.sprite.Sprite.__init__(self)
+        self.dialog = dialog
+        self.current_dialog_branch = self.dialog
+
+        self.pos = pos
+        self.size = size
+        pygame.freetype.init()  # need to initialize font library before use
+        self.font = pygame.freetype.Font(os.path.join(FONT_DIR, 'enchanted_land.otf'), 30)
+        self.font.fgcolor = (0,0,0)
+        self.surface = pygame.Surface(self.size, pygame.SRCALPHA)
+        image = pygame.image.load(os.path.join(DATA_DIR, 'tiles/textbox.png')).convert_alpha()
+        self.surface.blit(image, (0,0))
+
+    def word_wrap(self, text, start=(15,0), fgcolor=None):
+        if not fgcolor:
+            fgcolor = self.font.fgcolor
+
+        self.font.origin = True
+        words = text.split(' ')
+        width, height = self.surface.get_size()
+        line_spacing = self.font.get_sized_height() + 2
+        x, y = start[0], line_spacing + start[1]
+        space = self.font.get_rect(' ')
+        font_height = line_spacing
+
+        for word in words:
+            bounds = self.font.get_rect(word)
+            if x + bounds.width + bounds.x >= width - 15:
+                x, y = start[0], y + line_spacing + start[1]
+                font_height += line_spacing
+            if x + bounds.width + bounds.x >= width:
+                raise ValueError("word too wide for the surface")
+            if y + bounds.height - bounds.y >= height:
+                raise ValueError("text to long for the surface")
+            self.font.render_to(self.surface, (x, y), word, fgcolor)
+            x += bounds.width + space.width
+        return pygame.Rect(start, (x, font_height))
+
+    def render(self):
+        mouse = pygame.mouse.get_pos()
+
+        for prompt,response in self.current_dialog_branch:
+            text_rect = self.word_wrap(prompt)
+            offset_y = text_rect.bottom + 10
+
+            if isinstance(response, dict):
+                for response in prompt.keys():
+                    option_rect = self.word_wrap(response, (15, offset_y))
+                    if option_rect.collidepoint((mouse[0] - self.pos[0], mouse[1] - self.pos[1])) and \
+                            pygame.mouse.get_pressed()[0]:
+                            self.current_dialog_branch = self.current_dialog_branch[prompt][response]
+                    elif option_rect.collidepoint((mouse[0] - self.pos[0], mouse[1] - self.pos[1])):
+                        option_rect = self.word_wrap(response, (15, offset_y), (255, 255, 255))
+
+                    offset_y += option_rect.height + 10
+
+        return self.surface
+
+

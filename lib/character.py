@@ -1,55 +1,17 @@
-import os, pygame, yaml
-from display import Inventory, Item
+import pygame
+from display import DialogBox
 
-# Resource loading:
 DATA_PY = os.path.abspath(os.path.dirname(__file__))
-WALK_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/walkcycle/'))
-BOW_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/bow/'))
-HURT_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/hurt/'))
-SLASH_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/slash/'))
-SPELL_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/spell/'))
-THRUST_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/thrust/'))
-DATA_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/'))
-FONT_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/fonts/'))
 
-class Hero(pygame.sprite.DirtySprite):
-    def __init__(self):
+class Character(pygame.sprite.Sprite):
+    def __init__(self, action_data, action):
         pygame.sprite.DirtySprite.__init__(self)
-
-        self.action_data = {
-            'walk': {
-                'total_frames': 9,
-                'directory': WALK_DIR
-            },
-            'bow': {
-                'total_frames': 13,
-                'directory': BOW_DIR
-            },
-            'hurt': {
-                'total_frames': 6,
-                'directory': HURT_DIR
-            },
-            'slash': {
-                'total_frames': 6,
-                'directory': SLASH_DIR
-            },
-            'spell': {
-                'total_frames': 7,
-                'directory': SPELL_DIR
-            },
-            'thrust': {
-                'total_frames': 8,
-                'directory': THRUST_DIR
-            },
-        }
-
-        self.action = 'walk'
         self.change_x = 0
         self.change_y = 0
-        self.frame = 0
         self.direction = 'S'
-        self.y = 144
         self.stop = True
+        self.frame = 0
+        self.y = 0
 
         self.__updateSpriteFiles()
         self.__paintSprite()
@@ -58,13 +20,16 @@ class Hero(pygame.sprite.DirtySprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.mask.fill()
 
+        self.action_data = action_data
+        self.action = action
+
     def __paintSprite(self):
         """updates self.image with ordered surface of blits corresponding to those listed in self.equipped"""
         if self.frame >= self.action_data[self.action]['total_frames']:
             self.frame = 0
-        canvas = pygame.Surface([32,48]) # build surface
+        canvas = pygame.Surface([64,64]) # build surface
         image_list = []
-        area = (-self.frame * 64 - 16, -self.y, 32, 48)
+        area = (-self.frame * 64, -self.y, 64, 64)
 
         with open(os.path.join(DATA_DIR, 'hero.yaml')) as file:
             data = yaml.load(file)
@@ -80,23 +45,23 @@ class Hero(pygame.sprite.DirtySprite):
         """load new image files based on what is equipped. needs to be run on instantiation and on every equipment update"""
         with open(os.path.join(DATA_DIR, 'hero.yaml')) as file:
             data = yaml.load(file)
-            self.image_files = { k: pygame.image.load(os.path.join(self.action_data[self.action]['directory'], f"{v.get_stat('file')}.png")) for (k,v) in data['equipped'].items() if v }
+            self.image_files = { k: pygame.image.load(os.path.join(action_data[self.action]['directory'], f"{v.get_stat('file')}.png")) for (k,v) in data['equipped'].items() if v }
 
     def update(self, deg):
         # determine y value of sprite list
         if not self.stop:
             if deg > -45 and deg < 45:
                 self.direction = 'E'
-                self.y = 208
+                self.y = 192
             if deg > 45 and deg < 135:
                 self.direction = 'S'
-                self.y = 144
+                self.y = 128
             if (deg > 135 and deg < 180) or (deg > -180 and deg < -135):
                 self.direction = 'W'
-                self.y = 80
+                self.y = 64
             if deg > -135 and deg < -45:
                 self.direction = 'N'
-                self.y = 16
+                self.y = 0
 
             self.__paintSprite()
             self.frame += 1
@@ -122,3 +87,33 @@ class Hero(pygame.sprite.DirtySprite):
                 yaml.dump(data, file, default_flow_style=False)
             except yaml.YAMLError as exc:
                 print(exc)
+
+class NPC(Character):
+    def __init__(self, action_data, action, name, dialog):
+        Character.__init__(self, action_data, action)
+        self.name = name
+
+    def speak(self):
+        self.dialog_box = DialogBox(dialog)
+
+
+dialog = {
+    'Hello, how are you?': {
+        'Great!': {
+            'What do you want to do today?': {
+                'Kill stuff': action1,
+                'Explore': action2,
+            }
+        },
+        'Horrible...': {
+            'Why, what\'s wrong?': {
+                'I am wounded after a great battle': {
+                    'Well here\'s a health potion': action3
+                },
+                'I don\'t like you.': {
+                    'Well screw you then!': action4
+                }
+            }
+        }
+    }
+}

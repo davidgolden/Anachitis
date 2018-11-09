@@ -48,7 +48,6 @@ class Renderer(object):
             fringe.fill(0,0,0,0)
 
         for layer in self.tmx_data.visible_layers:
-            print(layer.name)
             if isinstance(layer, pytmx.TiledTileLayer):
                 if layer.name == 'Fringe':
                     for x, y, gid in layer:
