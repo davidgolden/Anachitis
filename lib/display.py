@@ -3,12 +3,90 @@ import pygame.freetype
 
 DATA_PY = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/'))
+IMAGE_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/images/'))
 FONT_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/fonts/'))
 WALK_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/walkcycle/'))
 SOUND_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sounds/'))
 
-def close_all_windows():
-    windows.update((k,False) for k in windows)
+class AllWindows:
+    """AllWindows tracks Window instances"""
+    def __init__(self):
+        self.windows = []
+
+    def __len__(self):
+        return len(self.windows)
+
+    def add_window(self, window):
+        self.windows.append(window)
+        print(self.windows)
+
+    def remove_window(self):
+        self.windows = []
+
+    def draw(self, surface):
+        if self.windows:
+            for window in self.windows:
+                surface.blit(window.render(), window.origin)
+
+active_windows = AllWindows()
+
+class Window:
+    def __init__(self, primary_surface, origin):
+        self.surface = primary_surface
+        self.rect = primary_surface.get_rect()
+        self.button_list = []
+        self.origin = origin
+        self.selection = None
+
+    def add_button(self, button, pos):
+        # self.surface.blit(button.surface, pos)
+        button.rect.x = pos[0] + self.origin[0]
+        button.rect.y = pos[1] + self.origin[1]
+        # button.rect.x = pos[0]
+        # button.rect.y = pos[1]
+        button.pos = pos
+        self.button_list.append(button)
+        self.surface.blit(button.surface, pos)
+
+    def render(self):
+        return self.surface
+
+    def collide_buttons(self, pos):
+        if self.button_list:
+            for button in self.button_list:
+                if button.rect.collidepoint(pos):
+                    button.on_hover()
+                    return self.surface.blit(button.surface, button.pos)
+        return False
+
+    def esc_buttons(self):
+        for button in self.button_list:
+            button.on_esc_hover()
+            self.surface.blit(button.surface, button.pos)
+
+    def click_button(self, pos):
+        if self.button_list:
+            for button in self.button_list:
+                if button.rect.collidepoint(pos):
+                    return button.on_click()
+        return False
+
+class Button:
+    def __init__(self, surface, image=None, on_hover=None, on_esc_hover=None, on_click=None):
+        self.surface = surface
+        self.rect = surface.get_rect()
+
+        self.hovering = False
+        self.on_hover = lambda: on_hover() if on_hover and not self.hovering else None
+        self.on_esc_hover = lambda: on_esc_hover() if on_esc_hover and self.hovering else None
+        self.on_click = lambda: on_click() if on_click else None
+        self.pos = (0,0)
+
+
+        if image:
+            self.image = image
+            self.surface.blit(image, (0,0))
+
 
 class Item:
     """concerned with item attributes and base images, not with frames or actions"""
@@ -134,20 +212,18 @@ class Inventory:
     def add_item(self, type, item):
         self.inventory.append(Item(type, item))
 
-class DialogBox(pygame.sprite.Sprite):
-    def __init__(self, pos, dialog, size=(400,200)):
-        pygame.sprite.Sprite.__init__(self)
-        self.dialog = dialog
-        self.current_dialog_branch = self.dialog
+class DialogBox:
+    def __init__(self, origin, dialog, size=(400,200)):
+        self.current_dialog_branch = dialog
 
-        self.pos = pos
+        self.origin = origin
         self.size = size
         pygame.freetype.init()  # need to initialize font library before use
         self.font = pygame.freetype.Font(os.path.join(FONT_DIR, 'enchanted_land.otf'), 30)
         self.font.fgcolor = (0,0,0)
-        self.surface = pygame.Surface(self.size, pygame.SRCALPHA)
-        image = pygame.image.load(os.path.join(DATA_DIR, 'tiles/textbox.png')).convert_alpha()
-        self.surface.blit(image, (0,0))
+
+        self.dialog_window = Window(pygame.Surface(self.size, pygame.SRCALPHA), self.origin)
+        self.dialog_window.surface.blit(pygame.image.load(os.path.join(DATA_DIR, 'tiles/textbox.png')).convert_alpha(), (0,0))
 
     def word_wrap(self, text, start=(15,0), fgcolor=None):
         if not fgcolor:
@@ -155,14 +231,17 @@ class DialogBox(pygame.sprite.Sprite):
 
         self.font.origin = True
         words = text.split(' ')
-        width, height = self.surface.get_size()
+        width, height = self.dialog_window.surface.get_size()
         line_spacing = self.font.get_sized_height() + 2
         x, y = start[0], line_spacing + start[1]
         space = self.font.get_rect(' ')
         font_height = line_spacing
 
+        container = pygame.Rect(start[0], start[1] + line_spacing, 0, 0)
+
         for word in words:
             bounds = self.font.get_rect(word)
+            container.width += bounds.width
             if x + bounds.width + bounds.x >= width - 15:
                 x, y = start[0], y + line_spacing + start[1]
                 font_height += line_spacing
@@ -170,28 +249,47 @@ class DialogBox(pygame.sprite.Sprite):
                 raise ValueError("word too wide for the surface")
             if y + bounds.height - bounds.y >= height:
                 raise ValueError("text to long for the surface")
-            self.font.render_to(self.surface, (x, y), word, fgcolor)
+            # self.font.render_to(self.dialog_window.surface, (x, y), None, fgcolor)
             x += bounds.width + space.width
-        return pygame.Rect(start, (x, font_height))
+        container.height = font_height
+
+        if container.width > width:
+            container.width = width
+
+        return container
+
+    def render_text_button(self, text, surface, pos, fgcolor, bgcolor=(219, 191, 123)):
+        # surface.fill(bgcolor)
+        self.font.render_to(surface, pos, text, fgcolor, bgcolor)
 
     def render(self):
-        mouse = pygame.mouse.get_pos()
+        # mouse = pygame.mouse.get_pos()
 
-        for prompt,response in self.current_dialog_branch:
-            text_rect = self.word_wrap(prompt)
-            offset_y = text_rect.bottom + 10
+        for prompt,response in self.current_dialog_branch.items():
+            rect = self.word_wrap(prompt)
+            self.font.render_to(self.dialog_window.surface, (rect.x, rect.y), prompt, self.font.fgcolor)
+            offset_y = 10
 
             if isinstance(response, dict):
-                for response in prompt.keys():
-                    option_rect = self.word_wrap(response, (15, offset_y))
-                    if option_rect.collidepoint((mouse[0] - self.pos[0], mouse[1] - self.pos[1])) and \
-                            pygame.mouse.get_pressed()[0]:
-                            self.current_dialog_branch = self.current_dialog_branch[prompt][response]
-                    elif option_rect.collidepoint((mouse[0] - self.pos[0], mouse[1] - self.pos[1])):
-                        option_rect = self.word_wrap(response, (15, offset_y), (255, 255, 255))
+                for option in response.keys():
+                    option_button = Button(option)
 
-                    offset_y += option_rect.height + 10
+                    bounds = self.word_wrap(option, (15, offset_y))
+                    button_surf = pygame.Surface((bounds.width, bounds.height), pygame.SRCALPHA)
+                    self.font.render_to(button_surf, (0, bounds.height), option)
 
-        return self.surface
+                    option_button = Button(button_surf,
+                                           None,
+                                           lambda: self.render_text_button(option, button_surf, (0, bounds.height), (255, 255, 255)),
+                                           lambda: self.render_text_button(option, button_surf, (0, bounds.height), (0, 0, 0))
+                                           )
 
+                    self.dialog_window.add_button(option_button, (bounds.x, bounds.y))
 
+                    offset_y += bounds.height + 10
+
+        exit_image = pygame.image.load(os.path.join(IMAGE_DIR, 'exit.png'))
+        exit_button = Button(pygame.Surface((14,14), pygame.SRCALPHA), exit_image, active_windows.remove_window())
+        self.dialog_window.add_button(exit_button, (self.dialog_window.rect.width - 24, 14))
+
+        active_windows.add_window(self.dialog_window)
