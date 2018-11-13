@@ -94,7 +94,6 @@ class NPC(Character):
         Character.__init__(self, sprite_data)
         self.name = sprite_data.get('name', '')
         self.dialog = sprite_data.get('dialog', '')
-        print(self.dialog)
 
     def click_action(self):
         """Default action to take if sprite is clicked"""

@@ -89,26 +89,46 @@ class Game():
             'x': 0,
             'y': 144,
             'frames': 9,
-            'dialog': {
-                'Hello, how are you?': {
-                    'Great!': {
-                        'What do you want to do today?': {
-                            'Kill stuff': 'action',
-                            'Explore': 'action',
-                        }
+            'dialog':
+                {
+                    1: {
+                        'text': 'Hello, how are you?',
+                        'prompt': True,
+                        'options': [2, 3],
                     },
-                    'Horrible...': {
-                        'Why, what\'s wrong?': {
-                            'I am wounded after a great battle': {
-                                'Well here\'s a health potion': 'action'
-                            },
-                            'I don\'t like you.': {
-                                'Well screw you then!': 'action'
-                            }
-                        }
+                    2: {
+                        'text': 'Great!',
+                        'prompt': False,
+                        'goto': 4
+                    },
+                    3: {
+                        'text': 'Horrible...',
+                        'prompt': False,
+                        'goto': 5
+                    },
+                    4: {
+                        'text': 'What do you want to do today?',
+                        'prompt': True,
+                        'options': [6]
+                    },
+                    5: {
+                        'text': 'Whats wrong?',
+                        'prompt': True,
+                        'options': [7]
+                    },
+                    6: {
+                        'text': 'Kill stuff!',
+                        'prompt': False,
+                        'condition': 1 + 1 == 2,
+                        'action': 'do stuff!'
+                    },
+                    7: {
+                        'text': 'Im wounded!',
+                        'prompt': False,
                     }
-                }
-            }
+
+                },
+
         }
 
         wizard = character.NPC(sprite_data)
@@ -119,12 +139,14 @@ class Game():
             if event.type == pygame.QUIT:
                 self.running = False
 
-            self.__check_clickables(pygame.mouse.get_pos(), False)
+            pos = pygame.mouse.get_pos()
+            actual_pos = (pos[0] - 24, pos[1] - 24)
+
+            self.__check_clickables(actual_pos, False)
 
             if pygame.mouse.get_pressed()[0]:
-                (x, y) = pygame.mouse.get_pos()
-                if not self.__check_clickables((x, y), True) and not len(display.active_windows):
-                    self.go_to_x, self.go_to_y = (x, y)
+                if not self.__check_clickables(actual_pos, True) and not len(display.active_windows):
+                    self.go_to_x, self.go_to_y = actual_pos
                     self.go_to_x -= 32
                     self.go_to_y -= 32
 

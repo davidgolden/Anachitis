@@ -18,7 +18,6 @@ class AllWindows:
 
     def add_window(self, window):
         self.windows.append(window)
-        print(self.windows)
 
     def remove_window(self):
         self.windows = []
@@ -39,14 +38,14 @@ class Window:
         self.selection = None
 
     def add_button(self, button, pos):
-        # self.surface.blit(button.surface, pos)
         button.rect.x = pos[0] + self.origin[0]
         button.rect.y = pos[1] + self.origin[1]
-        # button.rect.x = pos[0]
-        # button.rect.y = pos[1]
         button.pos = pos
         self.button_list.append(button)
         self.surface.blit(button.surface, pos)
+
+    def remove_option_buttons(self):
+        self.button_list = list(filter(lambda b: b.option.get('prompt', False), self.button_list))
 
     def render(self):
         return self.surface
@@ -72,21 +71,36 @@ class Window:
         return False
 
 class Button:
-    def __init__(self, surface, image=None, on_hover=None, on_esc_hover=None, on_click=None):
-        self.surface = surface
-        self.rect = surface.get_rect()
+    def __init__(self, option, bounds, font, action):
+        self.font = font
+        self.option = option
+        self.bounds = bounds
+        self.action = action
+
+        self.surface = pygame.Surface((bounds.width, bounds.height), pygame.SRCALPHA)
+        font.render_to(self.surface, (0, bounds.height), self.option.get('text', ''))
+        self.rect = self.surface.get_rect()
 
         self.hovering = False
-        self.on_hover = lambda: on_hover() if on_hover and not self.hovering else None
-        self.on_esc_hover = lambda: on_esc_hover() if on_esc_hover and self.hovering else None
-        self.on_click = lambda: on_click() if on_click else None
         self.pos = (0,0)
 
+    def render_text_button(self, text, surface, pos, fgcolor, bgcolor=(219, 191, 123)):
+        # surface.fill(bgcolor)
+        self.font.render_to(surface, pos, text, fgcolor, bgcolor)
 
-        if image:
-            self.image = image
-            self.surface.blit(image, (0,0))
+    def on_hover(self):
+        if not self.hovering:
+            self.render_text_button(self.option.get('text', ''), self.surface, (0, self.bounds.height), (255, 255, 255))
+            self.hovering = True
 
+    def on_esc_hover(self):
+        if self.hovering:
+            self.render_text_button(self.option.get('text', ''), self.surface, (0, self.bounds.height), (0, 0, 0))
+            self.hovering = False
+
+    def on_click(self):
+        if self.option.get('goto'):
+            self.action(self.option.get('goto'))
 
 class Item:
     """concerned with item attributes and base images, not with frames or actions"""
@@ -214,7 +228,9 @@ class Inventory:
 
 class DialogBox:
     def __init__(self, origin, dialog, size=(400,200)):
-        self.current_dialog_branch = dialog
+
+        self.dialog = dialog
+        self.current_dialog = list(dialog.values())[0] # always begin dialog with first item value
 
         self.origin = origin
         self.size = size
@@ -223,12 +239,10 @@ class DialogBox:
         self.font.fgcolor = (0,0,0)
 
         self.dialog_window = Window(pygame.Surface(self.size, pygame.SRCALPHA), self.origin)
-        self.dialog_window.surface.blit(pygame.image.load(os.path.join(DATA_DIR, 'tiles/textbox.png')).convert_alpha(), (0,0))
+        self.image = pygame.image.load(os.path.join(DATA_DIR, 'tiles/textbox.png')).convert_alpha()
+        self.dialog_window.surface.blit(self.image, (0,0))
 
-    def word_wrap(self, text, start=(15,0), fgcolor=None):
-        if not fgcolor:
-            fgcolor = self.font.fgcolor
-
+    def get_text_container(self, text, start=(15,0)):
         self.font.origin = True
         words = text.split(' ')
         width, height = self.dialog_window.surface.get_size()
@@ -249,7 +263,6 @@ class DialogBox:
                 raise ValueError("word too wide for the surface")
             if y + bounds.height - bounds.y >= height:
                 raise ValueError("text to long for the surface")
-            # self.font.render_to(self.dialog_window.surface, (x, y), None, fgcolor)
             x += bounds.width + space.width
         container.height = font_height
 
@@ -258,38 +271,29 @@ class DialogBox:
 
         return container
 
-    def render_text_button(self, text, surface, pos, fgcolor, bgcolor=(219, 191, 123)):
-        # surface.fill(bgcolor)
-        self.font.render_to(surface, pos, text, fgcolor, bgcolor)
+    def handle_option_click(self, goto):
+        self.current_dialog = self.dialog.get(goto)
+        self.dialog_window.surface.blit(self.image, (0, 0))
+        self.dialog_window.remove_option_buttons()
+        self.render()
 
     def render(self):
-        # mouse = pygame.mouse.get_pos()
+        print(self.current_dialog)
 
-        for prompt,response in self.current_dialog_branch.items():
-            rect = self.word_wrap(prompt)
-            self.font.render_to(self.dialog_window.surface, (rect.x, rect.y), prompt, self.font.fgcolor)
-            offset_y = 10
+        prompt = self.current_dialog.get('text')
+        rect = self.get_text_container(prompt)
+        self.font.render_to(self.dialog_window.surface, (rect.x, rect.y), prompt)
+        offset_y = 10
 
-            if isinstance(response, dict):
-                for option in response.keys():
-                    option_button = Button(option)
+        for option in self.current_dialog.get('options', []):
+            response = self.dialog[option]
+            bounds = self.get_text_container(response.get('text', ''), (15, offset_y))
+            option_button = Button(self.dialog[option], bounds, self.font, lambda goto: self.handle_option_click(goto))
+            self.dialog_window.add_button(option_button, (bounds.x, bounds.y))
+            offset_y += bounds.height + 10
 
-                    bounds = self.word_wrap(option, (15, offset_y))
-                    button_surf = pygame.Surface((bounds.width, bounds.height), pygame.SRCALPHA)
-                    self.font.render_to(button_surf, (0, bounds.height), option)
-
-                    option_button = Button(button_surf,
-                                           None,
-                                           lambda: self.render_text_button(option, button_surf, (0, bounds.height), (255, 255, 255)),
-                                           lambda: self.render_text_button(option, button_surf, (0, bounds.height), (0, 0, 0))
-                                           )
-
-                    self.dialog_window.add_button(option_button, (bounds.x, bounds.y))
-
-                    offset_y += bounds.height + 10
-
-        exit_image = pygame.image.load(os.path.join(IMAGE_DIR, 'exit.png'))
-        exit_button = Button(pygame.Surface((14,14), pygame.SRCALPHA), exit_image, active_windows.remove_window())
-        self.dialog_window.add_button(exit_button, (self.dialog_window.rect.width - 24, 14))
+        # exit_image = pygame.image.load(os.path.join(IMAGE_DIR, 'exit.png'))
+        # exit_button = Button(pygame.Surface((14,14), pygame.SRCALPHA), exit_image, active_windows.remove_window())
+        # self.dialog_window.add_button(exit_button, (self.dialog_window.rect.width - 24, 14))
 
         active_windows.add_window(self.dialog_window)
