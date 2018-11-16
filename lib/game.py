@@ -54,7 +54,7 @@ class Game():
 
         # self.active_windows = AllWindows()
 
-        pygame.mouse.set_cursor(*pygame.cursors.tri_right)
+        pygame.mouse.set_cursor(*pygame.cursors.tri_left)
 
     def __loadHero(self):
         self.hero = Hero()  # initiate hero once
@@ -89,6 +89,8 @@ class Game():
             'x': 0,
             'y': 144,
             'frames': 9,
+            'location': (500, 500),
+            'wander': pygame.Rect(550, 550, 100, 100),
             'dialog':
                 {
                     1: {
@@ -140,13 +142,12 @@ class Game():
                 self.running = False
 
             pos = pygame.mouse.get_pos()
-            actual_pos = (pos[0] - 24, pos[1] - 24)
 
-            self.__check_clickables(actual_pos, False)
+            self.__check_clickables(pos, False)
 
             if pygame.mouse.get_pressed()[0]:
-                if not self.__check_clickables(actual_pos, True) and not len(display.active_windows):
-                    self.go_to_x, self.go_to_y = actual_pos
+                if not self.__check_clickables(pos, True) and not len(display.active_windows):
+                    self.go_to_x, self.go_to_y = pos
                     self.go_to_x -= 32
                     self.go_to_y -= 32
 
@@ -175,24 +176,26 @@ class Game():
         if clicked and len(display.active_windows):
             for window in display.active_windows.windows:
                 if window.click_button(pos):
-                    return pygame.mouse.set_cursor(*pygame.cursors.diamond)
+                    return True
 
         elif clicked:
             for sprite in self.active_sprite_list:
                 if sprite.rect.collidepoint(pos):
-                    pygame.mouse.set_cursor(*pygame.cursors.diamond)
                     return sprite.click_action()
 
         if not clicked and len(display.active_windows):
             for window in display.active_windows.windows:
                 if window.collide_buttons(pos):
-                    pygame.mouse.set_cursor(*pygame.cursors.diamond)
+                    return True
                 else:
                     window.esc_buttons()
 
         elif not clicked:
-            # this will highlight NPC sprites
-            return False
+            for sprite in self.active_sprite_list:
+                if sprite.collidepoint(pos):
+                    sprite.highlighted = True
+                else:
+                    sprite.highlighted = False
 
         return False
 
@@ -217,6 +220,7 @@ class Game():
             self.location[1] += round(sin)
 
             self.blockers.update(-round(cos), -round(sin))
+            self.active_sprite_list.update((-round(cos), -round(sin)))
 
             self.go_to_x -= round(cos)
             self.go_to_y -= round(sin)
@@ -228,10 +232,13 @@ class Game():
                 self.location[1] -= round(sin)
                 self.blockers.update(round(cos), round(sin))
 
+            if pygame.sprite.spritecollideany(self.hero, self.active_sprite_list):
+                self.location[0] -= round(cos)
+                self.location[1] -= round(sin)
+                self.active_sprite_list.update((round(cos), round(sin)))
+
     def __renderScreen(self):
         self.screen.fill((0, 128, 0))
-
-        # self.active_sprite_list.update() # update active sprites
 
         self.update_hero_position()
 
@@ -240,26 +247,18 @@ class Game():
         self.screen.blit(self.map_surface, hero_location)
 
         self.hero_group.draw(self.screen)
+
+        self.active_sprite_list.update()
         self.active_sprite_list.draw(self.screen)  # draw active sprites
 
         self.screen.blit(self.fringe_layer, hero_location)
 
-        for sprite in self.active_sprite_list:
-            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                pygame.mouse.set_cursor(*pygame.cursors.diamond)
-                sprite.highlight()
-            else:
-                pygame.mouse.set_cursor(*pygame.cursors.tri_left)
-
-        # if len(display.active_windows):
-        #     self.screen.blits([(window.surface, window.rect) for window in display.active_windows.windows])
-
         display.active_windows.draw(self.screen)
 
-        pygame.freetype.init()  # need to initialize font library before use
-        font = pygame.freetype.Font(os.path.join(DATA_DIR, 'fonts/enchanted_land.otf'), 30)
-        inventory = font.render(f"pos: {self.location}", (0, 0, 0), (255, 221, 138))
-        self.screen.blit(inventory[0], (0, 0))
+        # pygame.freetype.init()  # need to initialize font library before use
+        # font = pygame.freetype.Font(os.path.join(DATA_DIR, 'fonts/enchanted_land.otf'), 30)
+        # inventory = font.render(f"pos: {self.location}", (0, 0, 0), (255, 221, 138))
+        # self.screen.blit(inventory[0], (0, 0))
 
         pygame.display.flip()
 

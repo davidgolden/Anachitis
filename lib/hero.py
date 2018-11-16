@@ -62,7 +62,7 @@ class Hero(pygame.sprite.DirtySprite):
         """updates self.image with ordered surface of blits corresponding to those listed in self.equipped"""
         if self.frame >= self.action_data[self.action]['total_frames']:
             self.frame = 0
-        canvas = pygame.Surface([32,48]) # build surface
+        canvas = pygame.Surface([32,48], pygame.SRCALPHA) # build surface
         image_list = []
         area = (-self.frame * 64 - 16, -self.y, 32, 48)
 
@@ -73,7 +73,6 @@ class Hero(pygame.sprite.DirtySprite):
                     image_list.append((self.image_files[k].convert_alpha(), pygame.Rect(area)))
 
         canvas.blits(image_list) # return surface blitted with images
-        canvas.set_colorkey((0,0,0))
         self.image = canvas.convert_alpha()
 
     def __updateSpriteFiles(self):

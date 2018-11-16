@@ -20,6 +20,7 @@ class AllWindows:
         self.windows.append(window)
 
     def remove_window(self):
+        print('remove window called')
         self.windows = []
 
     def draw(self, surface):
@@ -44,9 +45,6 @@ class Window:
         self.button_list.append(button)
         self.surface.blit(button.surface, pos)
 
-    def remove_option_buttons(self):
-        self.button_list = list(filter(lambda b: b.option.get('prompt', False), self.button_list))
-
     def render(self):
         return self.surface
 
@@ -64,6 +62,7 @@ class Window:
             self.surface.blit(button.surface, button.pos)
 
     def click_button(self, pos):
+        print('click button called')
         if self.button_list:
             for button in self.button_list:
                 if button.rect.collidepoint(pos):
@@ -71,21 +70,28 @@ class Window:
         return False
 
 class Button:
-    def __init__(self, option, bounds, font, action):
-        self.font = font
-        self.option = option
+    def __init__(self, bounds, action):
         self.bounds = bounds
         self.action = action
-
         self.surface = pygame.Surface((bounds.width, bounds.height), pygame.SRCALPHA)
-        font.render_to(self.surface, (0, bounds.height), self.option.get('text', ''))
         self.rect = self.surface.get_rect()
+        self.pos = (0, 0)
+
+    def on_click(self):
+        self.action()
+
+class TextButton(Button):
+    def __init__(self, bounds, action, option, font):
+        Button.__init__(self, bounds, action)
+        self.font = font
+        self.option = option
+        self.action
+
+        font.render_to(self.surface, (0, bounds.height), self.option.get('text', ''))
 
         self.hovering = False
-        self.pos = (0,0)
 
     def render_text_button(self, text, surface, pos, fgcolor, bgcolor=(219, 191, 123)):
-        # surface.fill(bgcolor)
         self.font.render_to(surface, pos, text, fgcolor, bgcolor)
 
     def on_hover(self):
@@ -101,6 +107,28 @@ class Button:
     def on_click(self):
         if self.option.get('goto'):
             self.action(self.option.get('goto'))
+
+class ImageButton(Button):
+    def __init__(self, bounds, action, image):
+        Button.__init__(self, bounds, action)
+        self.image = image
+        self.hovering = False
+        self.surface.blit(self.image, (0, 0))
+
+    def render(self):
+        self.surface.fill((0,0,0))
+        self.surface.blit(self.image, (0, 0))
+
+    def on_hover(self):
+        if not self.hovering:
+            self.image.fill((255, 255, 255, 128), None, pygame.BLEND_RGBA_MULT)
+            self.render()
+            self.hovering = True
+
+    def on_esc_hover(self):
+        if self.hovering:
+            self.render()
+            self.hovering = False
 
 class Item:
     """concerned with item attributes and base images, not with frames or actions"""
@@ -274,7 +302,7 @@ class DialogBox:
     def handle_option_click(self, goto):
         self.current_dialog = self.dialog.get(goto)
         self.dialog_window.surface.blit(self.image, (0, 0))
-        self.dialog_window.remove_option_buttons()
+        # self.dialog_window.remove_option_buttons()
         self.render()
 
     def render(self):
@@ -288,12 +316,14 @@ class DialogBox:
         for option in self.current_dialog.get('options', []):
             response = self.dialog[option]
             bounds = self.get_text_container(response.get('text', ''), (15, offset_y))
-            option_button = Button(self.dialog[option], bounds, self.font, lambda goto: self.handle_option_click(goto))
+            option_button = TextButton(bounds, lambda goto: self.handle_option_click(goto), self.dialog[option], self.font)
             self.dialog_window.add_button(option_button, (bounds.x, bounds.y))
             offset_y += bounds.height + 10
 
-        # exit_image = pygame.image.load(os.path.join(IMAGE_DIR, 'exit.png'))
-        # exit_button = Button(pygame.Surface((14,14), pygame.SRCALPHA), exit_image, active_windows.remove_window())
-        # self.dialog_window.add_button(exit_button, (self.dialog_window.rect.width - 24, 14))
+        exit_image = pygame.image.load(os.path.join(IMAGE_DIR, 'exit.png'))
+        # exit_button = ImageButton(pygame.Surface((14,14), pygame.SRCALPHA), exit_image, active_windows.remove_window())
+
+        exit_button = ImageButton(pygame.Rect(0,0,14,14), lambda: active_windows.remove_window(), exit_image)
+        self.dialog_window.add_button(exit_button, (self.dialog_window.rect.width - 24, 14))
 
         active_windows.add_window(self.dialog_window)
