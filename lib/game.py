@@ -7,6 +7,7 @@ import display
 import pytmx
 
 import tilerender
+import xml.etree.ElementTree as ET
 
 DATA_PY = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/'))
@@ -48,7 +49,7 @@ class Game():
 
         self.__loadHero()
 
-        self.active_sprite_list = pygame.sprite.Group()
+        self.things_and_stuff = pygame.sprite.Group()
 
         self.__loadScenes()
 
@@ -67,74 +68,30 @@ class Game():
         self.go_to_x = self.hero.rect.x
         self.go_to_y = self.hero.rect.y
 
-        self.hero_group = pygame.sprite.GroupSingle(self.hero)
+        self.hero_group = pygame.sprite.Group()
+        self.hero_group.add(self.hero)
+
+        self.scene = 'town'  # need to pull this from hero.yaml
 
     def __loadScenes(self, lazy=False):
-        # load starting coordinates
-        # with open(os.path.join(DATA_DIR, 'hero.yaml')) as file:
-        #     location = yaml.load(file)['location']
-        #     self.coord = [int(i) for i in location.split(',')]
+        tree = ET.parse(os.path.join(DATA_DIR, 'scenes.xml'))
+        root = tree.getroot()
+        self.active_sprite_list = pygame.sprite.Group()
+        for scene in root:
+            if scene.attrib['id'] == self.scene:
+                tile_renderer = tilerender.Renderer(os.path.join(MAIN_DIR, scene.attrib['file_path']))
+                for npc in scene.findall('npc'):
+                    if npc.get('type', '') == 'enemy':
+                        new_npc = character.NPC(npc)
+                        self.active_sprite_list.add(new_npc)
+                    else:
+                        new_enemy = character.Enemy(npc)
+                        self.active_sprite_list.add(new_enemy)
 
-        tile_renderer = tilerender.Renderer(os.path.join(MAIN_DIR, "map.tmx"))
-        self.map_surface, self.fringe_layer = tile_renderer.make_map(self.hero.rect.x, self.hero.rect.y)
-
-        self.map_rect = self.map_surface.get_rect()
-
-        self.blockers = tile_renderer.get_blockers()
-
-        sprite_data = {
-            'name': 'Tim',
-            'file_path': '/sprites/png/walkcycle/BODY_oldman.png',
-            'static': True,
-            'x': 0,
-            'y': 144,
-            'frames': 9,
-            'location': (500, 500),
-            'wander': pygame.Rect(550, 550, 100, 100),
-            'dialog':
-                {
-                    1: {
-                        'text': 'Hello, how are you?',
-                        'prompt': True,
-                        'options': [2, 3],
-                    },
-                    2: {
-                        'text': 'Great!',
-                        'prompt': False,
-                        'goto': 4
-                    },
-                    3: {
-                        'text': 'Horrible...',
-                        'prompt': False,
-                        'goto': 5
-                    },
-                    4: {
-                        'text': 'What do you want to do today?',
-                        'prompt': True,
-                        'options': [6]
-                    },
-                    5: {
-                        'text': 'Whats wrong?',
-                        'prompt': True,
-                        'options': [7]
-                    },
-                    6: {
-                        'text': 'Kill stuff!',
-                        'prompt': False,
-                        'condition': 1 + 1 == 2,
-                        'action': 'do stuff!'
-                    },
-                    7: {
-                        'text': 'Im wounded!',
-                        'prompt': False,
-                    }
-
-                },
-
-        }
-
-        wizard = character.NPC(sprite_data)
-        self.active_sprite_list.add(wizard)
+                self.map_surface, self.fringe_layer = tile_renderer.make_map(self.hero.rect.x, self.hero.rect.y)
+                self.map_rect = self.map_surface.get_rect()
+                self.blockers = tile_renderer.get_blockers()
+                self.portals = tile_renderer.get_portals()
 
     def __checkEvents(self):
         for event in pygame.event.get():
@@ -144,12 +101,14 @@ class Game():
             pos = pygame.mouse.get_pos()
 
             self.__check_clickables(pos, False)
+            self.check_collisions()
 
             if pygame.mouse.get_pressed()[0]:
-                if not self.__check_clickables(pos, True) and not len(display.active_windows):
-                    self.go_to_x, self.go_to_y = pos
-                    self.go_to_x -= 32
-                    self.go_to_y -= 32
+                if not self.__check_clickables(pos, True):
+                    if not len(display.active_windows):
+                        self.go_to_x, self.go_to_y = pos
+                        self.go_to_x -= 32
+                        self.go_to_y -= 32
 
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
@@ -181,7 +140,12 @@ class Game():
         elif clicked:
             for sprite in self.active_sprite_list:
                 if sprite.rect.collidepoint(pos):
-                    return sprite.click_action()
+                    if isinstance(sprite, character.NPC):
+                        return sprite.click_action()
+                    elif isinstance(sprite, character.Enemy):
+                        spell_obj = self.hero.cast_spell(pos)
+                        # spell_obj.rect.x, spell_obj.rect.y = self.hero.rect.x, self.hero.rect.y
+                        self.things_and_stuff.add(spell_obj)
 
         if not clicked and len(display.active_windows):
             for window in display.active_windows.windows:
@@ -198,6 +162,14 @@ class Game():
                     sprite.highlighted = False
 
         return False
+
+    def check_collisions(self):
+        pygame.sprite.groupcollide(self.things_and_stuff, self.active_sprite_list, True, True)
+
+    def update_groups(self, x, y):
+        self.blockers.update(x, y)
+        self.portals.update(x, y)
+        self.active_sprite_list.update((x, y))
 
     def update_hero_position(self):
         t = 5
@@ -219,23 +191,35 @@ class Game():
             self.location[0] += round(cos)
             self.location[1] += round(sin)
 
-            self.blockers.update(-round(cos), -round(sin))
-            self.active_sprite_list.update((-round(cos), -round(sin)))
+            self.update_groups(-round(cos), -round(sin))
 
             self.go_to_x -= round(cos)
             self.go_to_y -= round(sin)
 
             self.hero.update(deg)
 
-            if pygame.sprite.spritecollideany(self.hero, self.blockers):
-                self.location[0] -= round(cos)
-                self.location[1] -= round(sin)
-                self.blockers.update(round(cos), round(sin))
+            if pygame.sprite.spritecollideany(self.hero, self.blockers) or pygame.sprite.spritecollideany(self.hero,
+                                                                                                          self.active_sprite_list):
+                if deg > -45 and deg < 45:
+                    self.location[0] -= round(cos)
+                    self.update_groups(round(cos), 0)
 
-            if pygame.sprite.spritecollideany(self.hero, self.active_sprite_list):
-                self.location[0] -= round(cos)
-                self.location[1] -= round(sin)
-                self.active_sprite_list.update((round(cos), round(sin)))
+                elif deg > 45 and deg < 135:
+                    self.location[1] -= round(sin)
+                    self.update_groups(0, round(sin))
+
+                elif deg > 135 and deg < 180:
+                    self.location[0] -= round(cos)
+                    self.update_groups(round(cos), 0)
+
+                elif deg > -135 and deg < -45:
+                    self.location[1] -= round(sin)
+                    self.update_groups(0, round(sin))
+
+            if pygame.sprite.spritecollideany(self.hero, self.portals):
+                self.scene = pygame.sprite.spritecollideany(self.hero, self.portals).to
+                self.__loadScenes()
+
 
     def __renderScreen(self):
         self.screen.fill((0, 128, 0))
@@ -247,6 +231,9 @@ class Game():
         self.screen.blit(self.map_surface, hero_location)
 
         self.hero_group.draw(self.screen)
+
+        self.things_and_stuff.update()
+        self.things_and_stuff.draw(self.screen)
 
         self.active_sprite_list.update()
         self.active_sprite_list.draw(self.screen)  # draw active sprites
@@ -261,6 +248,7 @@ class Game():
         # self.screen.blit(inventory[0], (0, 0))
 
         pygame.display.flip()
+
 
     # def __saveGame(self):
     # self.hero.save()

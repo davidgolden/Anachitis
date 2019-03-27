@@ -48,3 +48,4 @@ inventory:
 stats:
   gold: 50
 location: '48,48,0,0'
+scene: 1

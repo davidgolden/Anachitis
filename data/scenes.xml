@@ -1,0 +1,31 @@
+<world>
+    <scene id="town" file_path="town.tmx">
+        <npc type="enemy" file_path="enemies/ratmen.png" width="50" height="50" x="50" y="50" frames="0" wander="550,550,100,100" location="250,250">
+        </npc>
+        <npc type="enemy" file_path="npcs/BODY_oldman.png" static="True" width="64" height="64" x="0" y="128" wander="550,550,100,100" location="500,500">
+            <dialog id="1">
+                <text>Hello, how are you?</text>
+                <options>
+                    <option action="dialog2">Great</option>
+                    <option action="dialog2">Horrible</option>
+                </options>
+            </dialog>
+            <dialog id="2">
+                <text>What do you want to do today?</text>
+                <options>
+                    <option action="dialog3">Kill stuff!</option>
+                </options>
+            </dialog>
+            <dialog id="3">
+                <text>What's wrong?</text>
+                <options>
+                    <option>I'm wounded!</option>
+                </options>
+            </dialog>
+        </npc>
+        <npc name="Tim" file_path="npcs/BODY_oldman.png" static="True" width="64" height="64" x="0" y="128" frames="0" location="500,500" wander="750,550,100,100">
+        </npc>
+    </scene>
+    <scene id="cave" file_path="cave.tmx">
+    </scene>
+</world>

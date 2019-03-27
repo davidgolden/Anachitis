@@ -1,18 +1,115 @@
-'47_47':
-  tile: '47_47'
-'48_47':
-  tile: '48_47'
-'49_47':
-  tile: '49_47'
-'47_48':
-  tile: '47_48'
-'48_48':
-  tile: '48_48'
-'49_48':
-  tile: '49_48'
-'47_49':
-  tile: '47_49'
-'48_49':
-  tile: '48_49'
-'49_49':
-  tile: '49_49'
+town:
+  map: 'map.tmx'
+  enemies:
+    - file_path: 'enemies/ratmen.png'
+      width: 50
+      height: 50
+      x: 0
+      y: 0
+      frames: 0
+      location:
+        - 250
+        - 250
+      wander:
+        - 200
+        - 200
+        - 100
+        - 100
+    - file_path: 'npcs/BODY_oldman.png'
+      static: 'True'
+      width: 64
+      height: 64
+      x: 0
+      y: 128
+      frames: 9
+      location:
+      - 500
+      - 500
+      wander:
+      - 550
+      - 550
+      - 100
+      - 100
+      dialog:
+        1:
+          text: 'Hello, how are you?'
+          prompt: 'True'
+          options:
+          - 2
+          - 3
+        2:
+          text: 'Great!'
+          prompt: 'False'
+          goto: 4
+        3:
+          text: 'Horrible...'
+          prompt: 'False'
+          goto: 5
+        4:
+          text: 'What do you want to do today?'
+          prompt: 'True'
+          options:
+          - 6
+        5:
+          text': 'Whats wrong?'
+          prompt: True
+          options:
+          - 7
+        6:
+          text: 'Kill stuff!'
+          prompt: False
+          condition: 1 + 1 == 2
+          action: 'do stuff!'
+        7:
+          text: 'Im wounded!'
+          prompt: False
+  npcs:
+  - name: 'Tim'
+    file_path: 'npcs/BODY_oldman.png'
+    static: 'True'
+    width: 64
+    height: 64
+    x: 0
+    y: 128
+    frames: 9
+    location:
+    - 800
+    - 500
+    wander:
+    - 750
+    - 550
+    - 100
+    - 100
+    dialog:
+      1:
+        text: 'Hello, how are you?'
+        prompt: 'True'
+        options:
+        - 2
+        - 3
+      2:
+        text: 'Great!'
+        prompt: 'False'
+        goto: 4
+      3:
+        text: 'Horrible...'
+        prompt: 'False'
+        goto: 5
+      4:
+        text: 'What do you want to do today?'
+        prompt: 'True'
+        options:
+        - 6
+      5:
+        text': 'Whats wrong?'
+        prompt: True
+        options:
+        - 7
+      6:
+        text: 'Kill stuff!'
+        prompt: False
+        condition: 1 + 1 == 2
+        action: 'do stuff!'
+      7:
+        text: 'Im wounded!'
+        prompt: False

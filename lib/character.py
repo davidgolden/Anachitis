@@ -1,9 +1,9 @@
-import pygame, os, random, math
+import pygame, os, random, math, time
 from display import DialogBox
 
 DATA_PY = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/'))
-WALK_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/walkcycle/'))
+SPRITE_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/'))
 
 
 class Character(pygame.sprite.Sprite):
@@ -14,24 +14,33 @@ class Character(pygame.sprite.Sprite):
         self.direction = 'S'
         self.stop = True
         self.frame = 0
-        self.position = sprite_data.get('location', (0, 0))
-        self.wander_rect = sprite_data.get('wander', False)
+
+        pos = sprite_data.attrib.get('location').split(',')
+        self.position = (pos[0], pos[1])
+
+        wrd = sprite_data.attrib.get('wander').split(',')
+        self.wander_rect = pygame.Rect(int(wrd[0]), int(wrd[1]), int(wrd[2]), int(wrd[3]))
 
         self.wandering = False
+        self.idle = 0
 
-        self.name = sprite_data.get('name', '')
-        # self.file_path = sprite_data.get('file_path', ''),
-        self.file_path = sprite_data['file_path']
-        self.static = sprite_data.get('static', True)
-        self.x = sprite_data.get('x', 0)
-        self.y = sprite_data.get('y', 0)
-        self.frames = sprite_data.get('frames', 1)
-        self.dialog = sprite_data.get('dialog', '')
+        self.name = sprite_data.attrib.get('name', '')
+        self.file_path = sprite_data.attrib.get('file_path')
+        self.static = sprite_data.attrib.get('static', True)
+
+        self.frames = int(sprite_data.attrib.get('frames', 1))
+
+        self.x = int(sprite_data.attrib.get('x', 0))
+        self.y = int(sprite_data.attrib.get('y', 0))
+        self.width = int(sprite_data.attrib.get('width', 64))
+        self.height = int(sprite_data.attrib.get('height', 64))
+
+        # self.dialog = sprite_data.get('dialog', '')
 
         self.__paintSprite()
 
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.position[0], self.position[1]
+        self.rect.x, self.rect.y = int(self.position[0]), int(self.position[1])
         self.dest_x, self.dest_y = self.rect.x, self.rect.y
 
         self.mask = pygame.mask.from_surface(self.image)
@@ -48,10 +57,11 @@ class Character(pygame.sprite.Sprite):
         if self.frame >= self.frames:
             self.frame = 0
 
-        canvas = pygame.Surface([32, 48], pygame.SRCALPHA)  # build surface
+        canvas = pygame.Surface([self.width, self.height], pygame.SRCALPHA)  # build surface
 
-        area = (-self.frame * 64 - 16, -self.y, 32, 48)
-        self.image_file = pygame.image.load(os.path.join(WALK_DIR, 'BODY_oldman.png')).convert_alpha()
+        area = (-self.frame * self.width, -self.y, self.width, self.height)
+
+        self.image_file = pygame.image.load(os.path.join(SPRITE_DIR, self.file_path)).convert_alpha()
 
         if not self.highlighted:
             canvas.blit(self.image_file, pygame.Rect(area))
@@ -88,7 +98,7 @@ class Character(pygame.sprite.Sprite):
         t = 15  # tolerance
         if pygame.Rect(self.dest_x, self.dest_y, t, t).colliderect(pygame.Rect(self.rect.x, self.rect.y, t, t)):
             return True  # if arrived at destination, stop
-        if self.wander_rect.contains(pygame.Rect(self.rect.x, self.rect.y, t, t)):
+        elif self.wander_rect.contains(pygame.Rect(self.rect.x, self.rect.y, t, t)):
             return True  # if wander_rect no longer contains self, stop
         return False
 
@@ -96,31 +106,31 @@ class Character(pygame.sprite.Sprite):
         # determine y value of sprite list
         self.__paintSprite()
 
-        if pos:
+        if pos:  # position is present when hero is moving
             self.rect.move_ip(pos[0], pos[1])
             self.wander_rect.move_ip(pos[0], pos[1])
 
         if self.wandering and not self.check_collisions():
             self.wandering = False
-        elif not self.wandering:
+        elif not self.wandering and self.wander_rect:  # check for wander_rect to control for static sprites
             self.go_to_destination()
 
-        if self.wandering:
+        if self.wandering and self.deg:
             self.rect.x += self.change_x
             self.rect.y += self.change_y
 
             if self.deg > -45 and self.deg < 45:
                 self.direction = 'E'
-                self.y = 208
-            if self.deg > 45 and self.deg < 135:
+                self.y = 192
+            elif self.deg > 45 and self.deg < 135:
                 self.direction = 'S'
-                self.y = 144
-            if (self.deg > 135 and self.deg < 180) or (self.deg > -180 and self.deg < -135):
+                self.y = 128
+            elif (self.deg > 135 and self.deg < 180) or (self.deg > -180 and self.deg < -135):
                 self.direction = 'W'
-                self.y = 80
-            if self.deg > -135 and self.deg < -45:
+                self.y = 64
+            elif self.deg > -135 and self.deg < -45:
                 self.direction = 'N'
-                self.y = 16
+                self.y = 0
 
             self.frame += 1
         else:
@@ -129,19 +139,7 @@ class Character(pygame.sprite.Sprite):
     def stop_move(self):
         self.stop = True
         self.frame = 0
-        # self.dirty = 1
         self.__paintSprite()
-
-    # def update_stat(self, stat, new_value):
-    #     with open(os.path.join(DATA_DIR, 'hero.yaml')) as file:
-    #         data = yaml.load(file)
-    #         data['stats'][stat] = new_value
-    #     with open(os.path.join(DATA_DIR, 'herlo.yaml'), 'w') as file:
-    #         try:
-    #             yaml.dump(data, file, default_flow_style=False)
-    #         except yaml.YAMLError as exc:
-    #             print(exc)
-
 
 class NPC(Character):
     def __init__(self, sprite_data):
@@ -149,9 +147,20 @@ class NPC(Character):
         Character.__init__(self, sprite_data)
 
         self.name = sprite_data.get('name', '')
-        self.dialog = sprite_data.get('dialog', '')
+        self.dialog = sprite_data.findall('dialog')
 
     def click_action(self):
         """Default action to take if sprite is clicked"""
         dialog_box = DialogBox((400, 400), self.dialog)
         return dialog_box.render()
+
+class Enemy(Character):
+    def __init__(self, sprite_data):
+        self.highlighted = False
+        Character.__init__(self, sprite_data)
+
+        self.name = sprite_data.get('name', '')
+
+    def click_action(self):
+        """Default action to take if sprite is clicked"""
+        pass

@@ -1,4 +1,4 @@
-import os, pygame, yaml
+import os, pygame, yaml, math
 from display import Inventory, Item
 
 # Resource loading:
@@ -11,6 +11,55 @@ SPELL_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/spell/')
 THRUST_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/sprites/png/thrust/'))
 DATA_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/'))
 FONT_DIR = os.path.normpath(os.path.join(DATA_PY, '../data/fonts/'))
+
+class Spell(pygame.sprite.Sprite):
+    def __init__(self, origin, target):
+        pygame.sprite.Sprite.__init__(self)
+        self.surface = pygame.Surface((27, 11), pygame.SRCALPHA)
+        temp_image = pygame.image.load(os.path.join(DATA_DIR, 'images/', 'fireball.png')).convert_alpha()
+
+        self.target = target
+        self.origin = origin
+        self.damage = 10
+        
+        dx = self.target[0] - origin[0]  # this is difference between mouse position and hero location
+        dy = self.target[1] - origin[1]
+        angle = math.atan2(dy, dx)
+
+        deg = round(math.degrees(angle))
+        x = deg - 270
+        if deg > 90 and deg < 180:
+            print('here')
+            x = deg - 90
+        elif deg < 0:
+            x = 180 - deg
+
+
+        print(deg)
+        self.image = pygame.transform.rotate(temp_image, x)
+        self.surface.blit(self.image, (0,0))
+
+        self.rect = self.image.get_rect()
+
+        self.rect.x = origin[0]
+        self.rect.y = origin[1]
+        
+        speed = 15
+
+        cos = speed * math.cos(angle)
+        sin = speed * math.sin(angle)
+
+        self.change_x = round(cos)
+        self.change_y = round(sin)
+    
+    def update(self):
+        self.rect.x += self.change_x
+        self.rect.y += self.change_y
+
+    def collidepoint(self, pos):
+        if self.rect.collidepoint((pos[0], pos[1])):
+            return True
+        return False
 
 class Hero(pygame.sprite.DirtySprite):
     def __init__(self):
@@ -121,3 +170,7 @@ class Hero(pygame.sprite.DirtySprite):
                 yaml.dump(data, file, default_flow_style=False)
             except yaml.YAMLError as exc:
                 print(exc)
+
+    def cast_spell(self, target):
+        new_spell = Spell((self.rect.x, self.rect.y), target)
+        return new_spell
